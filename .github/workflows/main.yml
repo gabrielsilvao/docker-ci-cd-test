@@ -29,14 +29,22 @@ jobs:
           tags: |
             43567/hello_world-python:latest
             43567/hello_world-python:${{github.run_number}}
+
   CD:
     runs-on: ubuntu-latest
     needs: [CI]
     steps:
-      - name: Docker Deployment
-        uses: wshihadeh/docker-deployment-action@v2
+      - uses: actions/checkout@v2
+
+      - name: Kubernetes set context
+        uses: Azure/k8s-set-context@v1
         with:
-          remote_docker_host: loktwo@localhost
-          ssh_public_key: 031824
-          ssh_private_key: 031824
-          args: my_app
+          method: kubeconfig
+          kubeconfig: ${{secrets.K8S_CONFIG}}
+          
+      - name: Deploy to Kubernetes cluster
+        uses: Azure/k8s-deploy@v1.3
+        with:
+          manifests: |
+            k8s/mongodb/deployment.yaml
+            k8s/mongodb/service.yaml
